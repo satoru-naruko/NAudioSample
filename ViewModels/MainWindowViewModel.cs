@@ -44,8 +44,6 @@ namespace NAudioSample.ViewModels
         {
         }
 
-        private NAudio.Wave.WaveOut sourceStream = null;
-        private NAudio.Wave.DirectSoundOut waveOut = null;
         private NAudio.Wave.WaveFileWriter waveWriter = null;
 
         public void Recording()
