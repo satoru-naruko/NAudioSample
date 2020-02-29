@@ -12,21 +12,44 @@ namespace NAudioSample.Model
         WasapiLoopbackCapture capture;
         WaveFileWriter writer;
 
-        public AudioCaptureModel()
-        {
-        }
+        object lockObject = new object();
 
         public AudioCaptureModel(string outputFilePath)
         {
-            this.capture = new WasapiLoopbackCapture();
-            this.writer = new WaveFileWriter(outputFilePath, capture.WaveFormat);
+            capture = new WasapiLoopbackCapture();
+            writer = new WaveFileWriter(outputFilePath, capture.WaveFormat);
+            lockObject = new object();
 
             capture.DataAvailable += DataAvailable;
         }
 
         public void Dispose()
         {
-            throw new NotImplementedException();
+            lock (lockObject)
+            {
+                Stop();
+                capture.Dispose();
+            }
+        }
+
+        public void Start()
+        {
+            lock (lockObject)
+            {
+                capture.StartRecording();
+            }
+        }
+
+        public void Stop()
+        {
+            lock (lockObject)
+            {
+                capture.StopRecording();
+                if (writer != null) { 
+                    writer.Dispose();
+                    writer = null;
+                }
+            }
         }
 
         public delegate void WaveDataAvaliableEventHandler(object sender, AudioCaptureWaveDataEventArgs e);
@@ -39,6 +62,15 @@ namespace NAudioSample.Model
 
         private void DataAvailable(object sender, WaveInEventArgs e)
         {
+            lock (lockObject)
+            {
+                if(writer != null)
+                writer.Write(e.Buffer, 0, e.BytesRecorded);
+                //if (writer.Position > capture.WaveFormat.AverageBytesPerSecond * 10)
+                //{
+                //    capture.StopRecording();
+                //}
+            }
             this.OnWaveDataAvailable(e);
         }
 

@@ -8,6 +8,7 @@ using System.Collections.ObjectModel;
 using System;
 using System.IO;
 using System.Threading;
+using NAudioSample.Model;
 
 namespace NAudioSample.ViewModels
 {
@@ -21,6 +22,7 @@ namespace NAudioSample.ViewModels
         }
 
         public DelegateCommand StartRecording { get; private set; }
+        public DelegateCommand StopRecording  { get; private set; }
 
         public ObservableCollection<string> WaveOutList { get; set; } = new ObservableCollection<string>();
 
@@ -37,54 +39,38 @@ namespace NAudioSample.ViewModels
         public MainWindowViewModel()
         {
             SetDeviceList();
-            StartRecording = new DelegateCommand(Recording);
-        }
-
-        ~MainWindowViewModel()
-        {
-        }
-
-        private NAudio.Wave.WaveFileWriter waveWriter = null;
-
-        public void Recording()
-        {
-            // 録音先のWavファイル
             using (var dialog = new System.Windows.Forms.SaveFileDialog())
-            {
+            { 
                 dialog.Title = "ファイルを保存";
                 dialog.Filter = "wavファイル|*.wav";
-
                 if (dialog.ShowDialog() == DialogResult.OK)
                 {
                     var outputFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "NAudio");
                     Directory.CreateDirectory(outputFolder);
                     var outputFilePath = Path.Combine(outputFolder, "recorded.wav");
-                    var capture = new WasapiLoopbackCapture();
-                    var writer = new WaveFileWriter(outputFilePath, capture.WaveFormat);
-
-                    capture.DataAvailable += (s, a) =>
-                    {
-                        writer.Write(a.Buffer, 0, a.BytesRecorded);
-                        if (writer.Position > capture.WaveFormat.AverageBytesPerSecond * 10)
-                        {
-                            capture.StopRecording();
-                        }
-                    };
-
-                    capture.RecordingStopped += (s, a) =>
-                    {
-                        writer.Dispose();
-                        writer = null;
-                        capture.Dispose();
-                    };
-
-                    capture.StartRecording();
-                }
-                else
-                {
+                    audioCaputure = new AudioCaptureModel(outputFilePath);
                 }
             }
 
+
+            StartRecording = new DelegateCommand(Recording);
+            StopRecording = new DelegateCommand(
+                () => { audioCaputure.Stop(); },
+                () => (audioCaputure != null)
+                );
+        }
+
+        ~MainWindowViewModel()
+        {
+            audioCaputure.Dispose();
+        }
+
+        private NAudio.Wave.WaveFileWriter waveWriter = null;
+        protected AudioCaptureModel audioCaputure = null;
+
+        public void Recording()
+        {
+            audioCaputure.Start();
             return;
         }
 
