@@ -14,17 +14,24 @@ namespace NAudioSample.ViewModels
 {
     public class MainWindowViewModel : BindableBase
     {
-        private string _title = "SimpleRecoder";
-        public string Title
+        private String _title = "SimpleRecoder";
+        public String Title
         {
             get { return _title; }
             set { SetProperty(ref _title, value); }
         }
 
+        private String _selectedAudioSouece = "SimpleRecoder";
+        public String SelectedAudioSouece
+        {
+            get { return _selectedAudioSouece; }
+            set { SetProperty(ref _selectedAudioSouece, value); }
+        }
+
         public DelegateCommand StartRecording { get; private set; }
         public DelegateCommand StopRecording  { get; private set; }
 
-        public ObservableCollection<string> WaveOutList { get; set; } = new ObservableCollection<string>();
+        public ObservableCollection<String> WaveOutList { get; set; } = new ObservableCollection<String>();
 
         private void SetDeviceList()
         {
