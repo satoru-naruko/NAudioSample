@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NAudio.CoreAudioApi;
 
 namespace NAudioSample.Model
 {
@@ -16,11 +17,7 @@ namespace NAudioSample.Model
 
         public AudioCaptureModel(string outputFilePath)
         {
-            capture = new WasapiLoopbackCapture();
-            writer = new WaveFileWriter(outputFilePath, capture.WaveFormat);
             lockObject = new object();
-
-            capture.DataAvailable += DataAvailable;
         }
 
         public void Dispose()
@@ -30,6 +27,23 @@ namespace NAudioSample.Model
                 Stop();
                 capture.Dispose();
             }
+        }
+
+        public bool Init(String speakerName, String outputFilePath)
+        {
+            var collection = new MMDeviceEnumerator().EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active);
+            MMDevice device = collection.FirstOrDefault(_device => _device.DeviceFriendlyName == speakerName);
+
+            if (device == null)
+            {
+                return false;
+            }
+
+            capture = new WasapiLoopbackCapture(device);
+            capture.DataAvailable += DataAvailable;
+            writer = new WaveFileWriter(outputFilePath, capture.WaveFormat);
+
+            return true;
         }
 
         public void Start()
@@ -50,6 +64,19 @@ namespace NAudioSample.Model
                     writer = null;
                 }
             }
+        }
+
+        public static List<string> ActiveSpeakers()
+        {
+            var deviceList = new List<string>();
+            var collection = new MMDeviceEnumerator().EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active);
+            foreach (var item in collection)
+            {
+                Console.WriteLine(item.DeviceFriendlyName);
+                deviceList.Add(item.DeviceFriendlyName);
+            }
+            return deviceList;
+
         }
 
         public delegate void WaveDataAvaliableEventHandler(object sender, AudioCaptureWaveDataEventArgs e);
