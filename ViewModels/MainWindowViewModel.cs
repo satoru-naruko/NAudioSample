@@ -21,72 +21,82 @@ namespace NAudioSample.ViewModels
             set { SetProperty(ref _title, value); }
         }
 
-        private String _selectedAudioSouece = "SimpleRecoder";
+        private String _selectedAudioSouece = "";
         public String SelectedAudioSouece
         {
             get { return _selectedAudioSouece; }
             set { SetProperty(ref _selectedAudioSouece, value); }
         }
 
+        private AudioCaptureModel _audioCaputure = null;
+        public AudioCaptureModel AudioCaputure
+        {
+            get { return _audioCaputure; }
+            set { SetProperty(ref _audioCaputure, value); }
+        }
+
         public DelegateCommand StartRecording { get; private set; }
         public DelegateCommand StopRecording  { get; private set; }
 
-        public ObservableCollection<String> WaveOutList { get; set; } = new ObservableCollection<String>();
+        public ObservableCollection<String> ActiveSpeaker { get; set; } = new ObservableCollection<String>();
 
         private void SetDeviceList()
         {
-            for (int i = 0; i < WaveOut.DeviceCount; i++)
+            var speakerList = AudioCaptureModel.ActiveSpeakers();
+            foreach (var speaker in speakerList)
             {
-                var capabilities = WaveOut.GetCapabilities(i);
-                WaveOutList.Add(capabilities.ProductName);
-                System.Console.WriteLine(capabilities.ProductName);
+                ActiveSpeaker?.Add(speaker);
             }
         }
 
         public MainWindowViewModel()
         {
             SetDeviceList();
-            using (var dialog = new System.Windows.Forms.SaveFileDialog())
-            { 
-                dialog.Title = "ファイルを保存";
-                dialog.Filter = "wavファイル|*.wav";
-                if (dialog.ShowDialog() == DialogResult.OK)
-                {
-                    var outputFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "NAudio");
-                    Directory.CreateDirectory(outputFolder);
-                    var outputFilePath = Path.Combine(outputFolder, "recorded.wav");
-                    audioCaputure = new AudioCaptureModel(outputFilePath);
-                }
-            }
-
 
             StartRecording = new DelegateCommand(Recording);
             StopRecording = new DelegateCommand(
-                () => { audioCaputure.Stop(); },
-                () => (audioCaputure != null)
-                );
+                () => { AudioCaputure.Stop(); },
+                () => (AudioCaputure != null)
+                ).ObservesProperty(() => AudioCaputure);
         }
 
         ~MainWindowViewModel()
         {
-            audioCaputure.Dispose();
+            AudioCaputure?.Dispose();
         }
 
         private NAudio.Wave.WaveFileWriter waveWriter = null;
-        protected AudioCaptureModel audioCaputure = null;
+
 
         public void Recording()
         {
-            audioCaputure.Start();
+            using (var dialog = new System.Windows.Forms.SaveFileDialog())
+            {
+                dialog.Title = "ファイルを保存";
+                dialog.Filter = "wavファイル|*.wav";
+                if (dialog.ShowDialog() == DialogResult.OK)
+                {
+                    AudioCaputure = new AudioCaptureModel(dialog.FileName);
+                    bool ret = AudioCaputure.Init(SelectedAudioSouece, dialog.FileName);
+                    if (ret)
+                    {
+                        AudioCaputure?.Start();
+                    }
+                }
+                else
+                {
+                    return;
+                }
+            }
+
             return;
         }
 
         private void sourceStream_DataAvailable(object sender, WaveInEventArgs e)
         {
-            if (waveWriter == null) return;
             // Waveファイルへ書き込み
-            waveWriter.Write(e.Buffer, 0, e.BytesRecorded);
-            waveWriter.Flush();
+            waveWriter?.Write(e.Buffer, 0, e.BytesRecorded);
+            waveWriter?.Flush();
         }
     }
 }
