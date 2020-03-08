@@ -2,8 +2,14 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:prism="http://prismlibrary.com/"
+        xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
         prism:ViewModelLocator.AutoWireViewModel="True"
         Title="{Binding Title}" Height="350" Width="525">
+    <i:Interaction.Triggers>
+        <i:EventTrigger EventName="Closed">
+            <prism:InvokeCommandAction Command="{Binding ClosedCommand}" />
+        </i:EventTrigger>
+    </i:Interaction.Triggers>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="1*" />
@@ -11,7 +17,8 @@
             <RowDefinition Height="8*" />
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="1" Orientation="Horizontal">
-            <ComboBox Width="150" Margin="30,0,30,0" SelectedIndex="0" SelectedValue="{Binding SelectedAudioSouece}" SelectedValuePath="Content" ItemsSource="{Binding WaveOutList}" />
+            <!--<ComboBox Width="150" Margin="30,0,30,0" SelectedIndex="0" SelectedValue="{Binding SelectedAudioSouece}" SelectedValuePath="Content" ItemsSource="{Binding WaveOutList}" />-->
+            <ComboBox Width="150" Margin="30,0,30,0" SelectedIndex="0" SelectedValue="{Binding SelectedAudioSouece}" ItemsSource="{Binding ActiveSpeaker}" />
             <Button Width="100" Margin="70,0,50,0" Command="{Binding StartRecording}" Content="Start"/>
             <Button Width="100" Margin="0,0,50,0"  Command="{Binding StopRecording}" Content="Stop" />
         </StackPanel>
