@@ -17,7 +17,6 @@
             <RowDefinition Height="8*" />
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="1" Orientation="Horizontal">
-            <!--<ComboBox Width="150" Margin="30,0,30,0" SelectedIndex="0" SelectedValue="{Binding SelectedAudioSouece}" SelectedValuePath="Content" ItemsSource="{Binding WaveOutList}" />-->
             <ComboBox Width="150" Margin="30,0,30,0" SelectedIndex="0" SelectedValue="{Binding SelectedAudioSouece}" ItemsSource="{Binding ActiveSpeaker}" />
             <Button Width="100" Margin="70,0,50,0" Command="{Binding StartRecording}" Content="Start"/>
             <Button Width="100" Margin="0,0,50,0"  Command="{Binding StopRecording}" Content="Stop" />
